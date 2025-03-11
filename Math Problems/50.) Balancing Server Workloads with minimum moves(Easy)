@@ -1,0 +1,108 @@
+A data center manages multiple servers, each processing a certain number of tasks. Some servers are overloaded, while others are underutilized. To optimize performance, the administrator can redistribute tasks between servers.
+The administrator can perform the following operation any number of times:
+Move one task from a server with extra tasks to a server with fewer tasks.
+The goal is to minimize the number of moves required to make all servers handle an equal number of tasks. If it is impossible to distribute tasks evenly, return -1.
+Goal --> Find the minimum number of moves required to balance the workload across all servers. If the workload cannot be evenly distributed, return -1.
+
+
+Example
+A data center has three servers, each with a different number of tasks.
+Input
+tasks = [3, 2, 7]
+Step-by-Step Redistribution
+Position
+Contents
+Start
+[3, 2, 7]
+Move 1 from Server 3 -Server 2 gma
+[3, 3, 6]
+Move 1 from Server 3-Server 1
+[4, 3, 5]
+Move 1 from Server 1 →
+[4, 4, 4]
+
+
+total moves required =3
+3 is the output
+Function Parameters
+int tasks [n]: The number of tasks assigned to each server.
+Returns
+• int: The minimum number of moves required to balance the workload, or -1 if balancing is impossible.
+
+
+Constraints
+• 2 ≤ n ≤ 1000 (Number of servers)
+• Tasks can only be moved between servers, not created or destroyed.
+
+
+Sample Case 0
+    Sample Input 0
+    3
+    [1 ,5 ,9]
+    Sample Output 0
+    
+    6
+    
+    Explanation
+    
+    • Total tasks = 1 + 5 + 9 = 15, which can be evenly distributed as 15 / 3 = 5 per server.
+    
+    • Moves needed:
+    
+    • Move 4 from server 3 → server 1 ([5 ,5 ,5]).
+    
+    • Move 2 from server 3 → server 2 ([5, 5, 5]).
+    
+    • Total moves = 6.
+
+Sample Case 1
+  Sample Input 1
+  4
+  [2 5 7 8]
+  Sample Output 1
+  -1
+
+
+#include <bits/stdc++.h>
+using namespace std;
+
+int minMovesToBalance(std::vector<int>& tasks) {
+    int n = tasks.size();
+    long long totalTasks = std::accumulate(tasks.begin(), tasks.end(), 0LL);
+    // Check if even distribution is possible
+    if (totalTasks % n != 0) {
+        return -1;
+    }
+    // Calculate target number of tasks per server
+    int targetTasks = totalTasks / n;
+    // Calculate the total number of tasks that need to be moved
+    int moves = 0;
+    for (int taskCount : tasks) {
+        // Count only tasks that need to be moved away from overloaded servers
+        if (taskCount > targetTasks) {
+            moves += taskCount - targetTasks;
+        }
+    }
+    return moves;
+}
+
+// Test function to run the provided examples
+void testMinMovesToBalance() {
+    // Sample case 0
+    vector<int> tasks1 = {1, 5, 9};
+    cout << "Sample case 0: " << minMovesToBalance(tasks1) << std::endl;  // Expected output: 6
+    
+    // Sample case 1
+    vector<int> tasks2 = {2, 5, 7, 8};
+    cout << "Sample case 1: " << minMovesToBalance(tasks2) << std::endl;  // Expected output: -1
+    
+    // Additional test case from problem description
+    vector<int> tasks3 = {3, 2, 7};
+    cout << "Additional test: " << minMovesToBalance(tasks3) << std::endl;  // Expected output: 3
+}
+
+int main() {
+    testMinMovesToBalance();
+    return 0;
+}
+  
