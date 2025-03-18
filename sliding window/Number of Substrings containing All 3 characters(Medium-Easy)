@@ -49,6 +49,24 @@ public:
 };
 
 
+🚩 Why Add s.size() - j to the Count?
+Once you find a valid substring (containing a, b, and c):
+
+The substring starting at i and ending at j is guaranteed to be valid.
+But there are additional valid substrings that can be formed by extending the current valid substring:
+You can include every character after j in the substring, making the new substrings still valid.
+For example, if s = "abcde", when j = 2 forms the substring abc, you can form additional valid substrings:
+abc
+abcd
+abcde
+The number of valid substrings starting at i and including all characters from j to the end is:
+s.size()
+−
+𝑗
+s.size()−j
+Therefore, you add s.size() - j to the count.
+
+
 Optimal Code --> 
 
 class Solution {
