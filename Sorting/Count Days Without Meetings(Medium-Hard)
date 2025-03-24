@@ -1,0 +1,325 @@
+You are given a positive integer days representing the total number of days an employee is available for work (starting from day 1).
+You are also given a 2D array meetings of size n where, meetings[i] = [start_i, end_i] represents the starting and ending days of meeting i (inclusive).
+Return the count of days when the employee is available for work but no meetings are scheduled.
+Note: The meetings may overlap.
+
+Example 1:
+Input: days = 10, meetings = [[5,7],[1,3],[9,10]]
+Output: 2
+Explanation:
+There is no meeting scheduled on the 4th and 8th days.
+
+Example 2:
+Input: days = 5, meetings = [[2,4],[1,3]]
+Output: 1
+Explanation:
+There is no meeting scheduled on the 5th day.
+
+Example 3:
+Input: days = 6, meetings = [[1,6]]
+Output: 0
+Explanation:
+Meetings are scheduled for all working days.
+
+Constraints:
+1 <= days <= 109
+1 <= meetings.length <= 105
+meetings[i].length == 2
+1 <= meetings[i][0] <= meetings[i][1] <= days
+
+
+Approach
+1.) Line sweep method uses packed unsigned info for the pair (time, isStart)
+2.) Sort the info
+3.) 2nd loop is to find the cnt for free days.
+4.) The number for the free ones between last & days is added to cnt
+5.) Merge Interval method sort the meetings
+6.) then proceed the process for merging intervals.
+7.) 3rd C++ is based on 1st code but replaces the std::sort by own radix_sort. 256 buckets are used; at most 4 rounds the info can be sorted.
+
+(My code--> Not good solution)(
+class Solution {
+public:
+    vector<vector<int>>removeOverlap(vector<vector<int>>& meetings){
+        vector<vector<int>>ans;
+        for(int i = 0;i<meetings.size();i++){
+            if(ans.empty() || ans.back()[1] < meetings[i][0]) {
+                ans.push_back(meetings[i]);
+            }
+            else {
+                ans.back()[1] = max(ans.back()[1], meetings[i][1]);
+            }
+        }
+        return ans;
+    }
+    int countDays(int days, vector<vector<int>>& meetings) {
+        sort(meetings.begin(), meetings.end());
+        vector<vector<int>>rem = removeOverlap(meetings);
+
+        for(auto it : rem){
+            cout<<it[0]<<" "<<it[1]<<endl;
+        }
+
+        int n = rem.size();
+        int count = 0;
+
+        for(int i = 0;i<n;i++){
+            count += (rem[i][1] - rem[i][0] + 1);
+        }
+        return (days - count);
+    }
+};
+)
+Intuition
+3 approaches for solution
+
+  1.)Line Sweep then sort the events
+code --> 
+
+class Solution {
+public:
+    int countDays(int days, vector<vector<int>>& meetings) {
+        const int n = meetings.size(), N=2*n;
+        vector<unsigned> info(N);
+        int i=0;
+        
+        // Encode meeting start and end 
+        for (auto& m : meetings) {
+            const unsigned s= m[0], e=m[1];
+            info[i++]=(s<<1)|1;  // Start, mark with LSB=1
+            info[i++]=(e+1)<<1;  // End (exclusive)
+        }
+
+        // Sort the events
+        sort(info.begin(), info.end());
+
+        int overlap=0, cnt=0, last=1;
+        
+        // Process events in sorted order
+        for (int i=0; i<N; i++) {
+            const int x=info[i]>>1;    // Extract day
+            const bool isStart=info[i]&1;
+
+            // If no overlap, count the days between last and current 
+            if (overlap==0 && last<x) 
+                cnt+=(x-last);
+
+            overlap+=isStart?1:-1;  // Increment on start, decrement on end
+            if(overlap==0) last=x;   // Update last when no overlap
+        }
+
+        // free between last & days
+        if (last<=days) 
+            cnt+=(days-last+1);
+
+        return cnt;
+    }
+};
+
+  2.)Sort the meetings then merge the intervals (Like LC. 56. Merge Intervals)
+code --> 
+
+class Solution {
+public:
+    int countDays(int days, vector<vector<int>>& m) {
+        // Sort the meetings by their start time
+        sort(m.begin(), m.end(), [](vector<int>& a, vector<int>& b) {
+            return a[0] < b[0];
+        });
+        
+        int count = 0;
+        
+        // Handle the first interval: days before the first meeting
+        count += m[0][0] - 1;
+        
+        // Merge intervals and count the gaps between consecutive meetings
+        for (int i = 1; i < m.size(); i++) {
+            if (m[i][0] <= m[i-1][1]) {  // Overlapping or contiguous intervals
+                m[i][1] = max(m[i][1], m[i-1][1]);  // Merge intervals
+            } else {  // There is a gap between intervals
+                count += m[i][0] - m[i-1][1] - 1;  // Count the gap
+            }
+        }
+        
+        // Add the days after the last meeting
+        count += days - m[m.size()-1][1];
+        
+        return count;
+    }
+};
+
+  3.)Line sweep + radix sort
+code --> 
+vector<int> bucket[256]; 
+void radix_sort(vector<int>& nums) {
+    auto [m, M]=minmax_element(nums.begin(), nums.end());
+    unsigned xrange=*M-*m+1;
+    int round = max(1, int(32-countl_zero(xrange)+7)/8), xmin=*m;
+    // 0th round
+    for (int& x : nums) {
+        x-=xmin; //Adjust x by xmin
+        bucket[x & 255].push_back(x);
+    }
+    int i = 0;
+    for (auto& B : bucket) {
+        for (auto v : B)
+            nums[i++] = v+(round==1?xmin:0);
+        B.clear();
+    }
+
+    // Rounds from 1st to (round-2)th round
+    for (int rd=1; rd < round-1; rd++) {
+        int shift=rd*8; // Bit shifting to extract the next set of 8 bits
+        for (auto& x : nums)
+            bucket[(x >> shift) & 255].push_back(x);
+
+        i=0;
+        for (auto& B : bucket) {
+            for (auto& v : B)
+                nums[i++] = v;
+            B.clear(); // Clear bucket after usage
+        }
+    }
+    // Last round
+    if (round > 1) {
+        int shift =8* (round-1); // Bit shifting for the last round
+        for (auto& x : nums)
+            bucket[x >> shift].push_back(x);
+
+        i=0;
+        for (auto& B : bucket) {
+            for (auto& v : B)
+                nums[i++] =v+xmin; // Adjust x back by adding xmin
+            B.clear();             // Clear bucket after usage
+        }
+    }
+}
+class Solution {
+public:
+    int countDays(int days, vector<vector<int>>& meetings) {
+        const int n = meetings.size(), N=2*n;
+        vector<int> info(N);
+        int i=0;
+        // Encode meeting start and end 
+        for (auto& m : meetings) {
+            const int s= m[0], e=m[1];
+            info[i++]=(s<<1)|1;  // Start, mark with LSB=1
+            info[i++]=(e+1)<<1;  // End (exclusive)
+        }
+
+        // Sort the events
+        radix_sort(info);
+
+        int overlap=0, cnt=0, last=1;
+        
+        // Process events in sorted order
+        for (int i=0; i<N; i++) {
+            const int x=info[i]>>1;    // Extract day
+            const bool isStart=info[i]&1;
+
+            // If no overlap, count the days between last and current 
+            if (overlap==0 && last<x) 
+                cnt+=(x-last);
+
+            overlap+=isStart?1:-1;  // Increment on start, decrement on end
+            if(overlap==0) last=x;   // Update last when no overlap
+        }
+
+        // free between last & days
+        if (last<=days) 
+            cnt+=(days-last+1);
+
+        return cnt;
+    }
+};
+
+Sorting is the key issue for the speed in this question.
+
+
+There is one more solution to this problem that I want to study --> 
+
+#define INL __attribute__((always_inline))
+#define HOT __attribute__((hot))
+#define LAM_ATTR INL HOT noexcept
+
+#pragma GCC diagnostic ignored "-Wvla-cxx-extension"
+
+template <class It, class Fun, uint8_t RBITS>
+HOT remove_reference<decltype(*declval<It>())>::type radix_stable_sort(const It beg, const It end, const uint8_t pos, const It out, const Fun getval) noexcept {
+    constexpr uint RADIX = 1u << RBITS, RMASK = RADIX - 1u;
+    uint freqs[RADIX + 1u] = {};
+    for (auto curr = beg; curr < end; curr++)
+        freqs[((getval(*curr) >> pos) & RMASK) + 1u]++;
+    partial_sum(freqs + 1u, freqs + RADIX + 1u, freqs + 1u);
+    auto maxi = *beg;
+    auto maxv = getval(maxi);
+    for (auto curr = beg; curr < end; curr++) {
+        const auto i = *curr;
+        const auto v = getval(i);
+        out[freqs[((v >> pos) & RMASK)]++] = i;
+        if (v > maxv) {
+            maxi = i;
+            maxv = v;
+        }
+    }
+    return maxi;
+}
+
+template <class It, class Fun, uint8_t RBITS>
+HOT void adaptive_sort(const It beg, const It end, const Fun getval) noexcept {
+    using T = remove_reference<decltype(*declval<It>())>::type;
+    using V = result_of<decltype(getval)(const T)>::type;
+    constexpr uint8_t BITSIZE = sizeof(V) * 8u;
+    const uint n = end - beg;
+    if (n > 1u << (RBITS - 2u)) {
+        T temp[n];
+        It bin = beg, ein = end, bout = temp, eout = temp + n;
+        T maxi = *beg;
+        V maxv = 1;
+        for (uint8_t pos = 0; pos < BITSIZE && maxv >> pos; pos += RBITS) {
+            maxi = radix_stable_sort<It, Fun, RBITS>(bin, ein, pos, bout, getval);
+            maxv = getval(maxi);
+            swap(bin, bout);
+            swap(ein, eout);
+        }
+        if (bout == beg)
+            copy(bin, ein, beg);
+    } else if (n > 2) {
+        sort(beg, end, [getval](const T i, const T j) LAM_ATTR { return getval(i) < getval(j); });
+    } else if (n == 2 && getval(beg[0]) > getval(beg[1])) {
+        swap(beg[0], beg[1]);
+    }
+}
+
+class Solution {
+public:
+    static int countDays(const uint days, vector<vector<int>> &meetings) noexcept __attribute__((hot)) {
+        const uint n = meetings.size();
+        uint maxend = meetings.front()[1];
+        for (uint i = 1; i < n; i++)
+            maxend = max<uint>(meetings[i][1], maxend);
+        const uint8_t sh = 32 - __builtin_clz(maxend);
+        const uint msk = (1u << sh) - 1;
+        vector<uint64_t> &ms = (vector<uint64_t>&)meetings;
+        for (uint i = 0; i < n; i++) {
+            const auto &m = meetings[i];
+            ms[i] = (uint64_t(m.front()) << sh) + m[1];
+        }
+        adaptive_sort<uint64_t*,identity,12>(ms.data(), ms.data() + n, identity());
+        uint c = 0, l = 0;
+        for (uint i = 0; i < n; i++) {
+            const uint s = ms[i] >> sh, e = ms[i] & msk;
+            c += max(l + 1, s) - (l + 1);
+            l = max(l, e);
+        }
+        ms.clear();
+        return c + days - l;
+    }
+};
+
+auto init = []() noexcept {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    return 'c';
+}();
