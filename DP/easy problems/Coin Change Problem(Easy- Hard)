@@ -1,0 +1,332 @@
+You are given an integer array coins representing coins of different denominations and an integer amount representing a total amount of money.
+
+Return the fewest number of coins that you need to make up that amount. If that amount of money cannot be made up by any combination of the coins, return -1.
+
+You may assume that you have an infinite number of each kind of coin.
+
+ 
+
+Example 1:
+
+Input: coins = [1,2,5], amount = 11
+Output: 3
+Explanation: 11 = 5 + 5 + 1
+
+Example 2:
+
+Input: coins = [2], amount = 3
+Output: -1
+
+Example 3:
+
+Input: coins = [1], amount = 0
+Output: 0
+
+ 
+
+Constraints:
+
+    1 <= coins.length <= 12
+    1 <= coins[i] <= 231 - 1
+    0 <= amount <= 104
+
+code --> 1.) 
+const int N = 100000007;
+int dp[N];
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+        sort(coins.begin(),coins.end());
+        dp[0] = 0;
+        
+        for(int i = 1;i<=amount;i++){
+            dp[i] = INT_MAX;
+            for(auto c : coins){
+                if(i - c < 0)break;
+                if(dp[i-c] != INT_MAX) dp[i] = min(dp[i], 1+dp[i-c]);
+            }
+        }
+       return  dp[amount] == INT_MAX ?-1:dp[amount];
+    }
+};
+
+
+
+2.) Understanding the Coin Change Problem
+
+The coin change problem is a classic dynamic programming challenge that asks: given a set of coin denominations and a target amount, what's the minimum number of coins needed to make that amount (or alternatively, how many different ways can you make that amount)?
+
+Let me explain both variants of this problem and show you different solution approaches.
+Problem Variant 1: Minimum Number of Coins
+
+*********Problem statement: Given coin denominations [c₁, c₂, ..., cₙ] and a target amount A, find the minimum number of coins needed to make amount A.
+Example
+
+    Coin denominations: [1, 5, 10, 25]
+    Target amount: 36
+    Minimum coins needed: 3 (25 + 10 + 1)
+
+********Problem Variant 2: Number of Ways to Make Change
+
+Problem statement: Given coin denominations [c₁, c₂, ..., cₙ] and a target amount A, find the total number of different ways to make change for amount A.
+Example
+
+    Coin denominations: [1, 2, 5]
+    Target amount: 5
+    Number of ways: 4 (5), (2+2+1), (2+1+1+1), (1+1+1+1+1)
+
+Let me show you solution approaches for both variants:
+Understanding the Solutions
+Approach 1: Dynamic Programming (Bottom-up)
+
+This is the most common approach for both variants:
+
+    Create a DP array where dp[i] represents the solution for amount i
+    Build solutions incrementally from 0 to the target amount
+    Time complexity: O(amount × number of coins)
+    Space complexity: O(amount)
+
+Approach 2: Dynamic Programming (Top-down with Memoization)
+
+    Uses recursion with memoization to avoid redundant calculations
+    Useful when you want to understand the problem more intuitively
+    Same time and space complexity as bottom-up but may have more overhead
+
+Approach 3: Greedy Algorithm
+
+    Works only for certain coin systems (like US coins) where each coin is a multiple of smaller coins
+    Simply pick the largest coin possible at each step
+    Time complexity: O(amount)
+    Not guaranteed to work for arbitrary coin sets
+
+Approach 4: Backtracking (for listing all combinations)
+
+    Used to enumerate all possible ways to make change
+    Exponential time complexity, but useful for small inputs or educational purposes
+
+
+
+
+code --> 
+#include <iostream>
+#include <vector>
+#include <climits>
+#include <algorithm>
+
+// Variant 1: Minimum Number of Coins (Bottom-up DP)
+int minCoinsBottomUp(const std::vector<int>& coins, int amount) {
+    // Initialize dp array with infinity
+    std::vector<int> dp(amount + 1, INT_MAX);
+    dp[0] = 0;  // Base case: 0 coins needed to make amount 0
+    
+    // Fill dp array
+    for (int i = 1; i <= amount; i++) {
+        for (int coin : coins) {
+            if (coin <= i && dp[i - coin] != INT_MAX) {
+                dp[i] = std::min(dp[i], dp[i - coin] + 1);
+            }
+        }
+    }
+    
+    return dp[amount] == INT_MAX ? -1 : dp[amount];
+}
+
+// Variant 1: Minimum Number of Coins (Top-down with memoization)
+int minCoinsTopDownHelper(const std::vector<int>& coins, int amount, std::vector<int>& memo) {
+    // Base cases
+    if (amount == 0) return 0;
+    if (amount < 0) return INT_MAX;
+    if (memo[amount] != -1) return memo[amount];
+    
+    // Try each coin
+    int minCoins = INT_MAX;
+    for (int coin : coins) {
+        int result = minCoinsTopDownHelper(coins, amount - coin, memo);
+        if (result != INT_MAX) {
+            minCoins = std::min(minCoins, result + 1);
+        }
+    }
+    
+    memo[amount] = minCoins;
+    return minCoins;
+}
+
+int minCoinsTopDown(const std::vector<int>& coins, int amount) {
+    std::vector<int> memo(amount + 1, -1);
+    int result = minCoinsTopDownHelper(coins, amount, memo);
+    return result == INT_MAX ? -1 : result;
+}
+
+// Variant 1: Minimum Number of Coins with coin tracking
+std::pair<int, std::vector<int>> minCoinsWithTracking(const std::vector<int>& coins, int amount) {
+    // Initialize dp array with infinity
+    std::vector<int> dp(amount + 1, INT_MAX);
+    dp[0] = 0;
+    
+    // To track which coins were used
+    std::vector<int> coinUsed(amount + 1, 0);
+    
+    // Fill dp array
+    for (int i = 1; i <= amount; i++) {
+        for (int coin : coins) {
+            if (coin <= i && dp[i - coin] != INT_MAX && dp[i - coin] + 1 < dp[i]) {
+                dp[i] = dp[i - coin] + 1;
+                coinUsed[i] = coin;
+            }
+        }
+    }
+    
+    // Reconstruct the solution
+    std::vector<int> result;
+    if (dp[amount] == INT_MAX) {
+        return {-1, result};
+    }
+    
+    // Backtrack to find which coins were used
+    int currentAmount = amount;
+    while (currentAmount > 0) {
+        result.push_back(coinUsed[currentAmount]);
+        currentAmount -= coinUsed[currentAmount];
+    }
+    
+    return {dp[amount], result};
+}
+
+// Variant 2: Number of Ways to Make Change (Bottom-up DP)
+int countWaysBottomUp(const std::vector<int>& coins, int amount) {
+    // Initialize dp array
+    std::vector<int> dp(amount + 1, 0);
+    dp[0] = 1;  // Base case: there's 1 way to make amount 0 (using no coins)
+    
+    // Fill dp array
+    for (int coin : coins) {
+        for (int i = coin; i <= amount; i++) {
+            dp[i] += dp[i - coin];
+        }
+    }
+    
+    return dp[amount];
+}
+
+// Variant 2: Number of Ways to Make Change (Top-down with memoization)
+int countWaysTopDownHelper(const std::vector<int>& coins, int index, int amount, std::vector<std::vector<int>>& memo) {
+    // Base cases
+    if (amount == 0) return 1;
+    if (amount < 0 || index >= coins.size()) return 0;
+    
+    // Check memo
+    if (memo[index][amount] != -1) return memo[index][amount];
+    
+    // Recursive case: include current coin or skip it
+    int includeCurrentCoin = countWaysTopDownHelper(coins, index, amount - coins[index], memo);
+    int skipCurrentCoin = countWaysTopDownHelper(coins, index + 1, amount, memo);
+    
+    memo[index][amount] = includeCurrentCoin + skipCurrentCoin;
+    return memo[index][amount];
+}
+
+int countWaysTopDown(const std::vector<int>& coins, int amount) {
+    std::vector<std::vector<int>> memo(coins.size(), std::vector<int>(amount + 1, -1));
+    return countWaysTopDownHelper(coins, 0, amount, memo);
+}
+
+// Variant 2: Print all combinations of coins that make the amount
+void printAllCombinationsHelper(const std::vector<int>& coins, int startIndex, int remaining, 
+                               std::vector<int>& currentCombination, std::vector<std::vector<int>>& result) {
+    if (remaining == 0) {
+        result.push_back(currentCombination);
+        return;
+    }
+    
+    if (remaining < 0) {
+        return;
+    }
+    
+    for (int i = startIndex; i < coins.size(); i++) {
+        currentCombination.push_back(coins[i]);
+        // Use the same coin index again as we can reuse coins
+        printAllCombinationsHelper(coins, i, remaining - coins[i], currentCombination, result);
+        currentCombination.pop_back();
+    }
+}
+
+std::vector<std::vector<int>> printAllCombinations(const std::vector<int>& coins, int amount) {
+    std::vector<std::vector<int>> result;
+    std::vector<int> currentCombination;
+    printAllCombinationsHelper(coins, 0, amount, currentCombination, result);
+    return result;
+}
+
+// Greedy approach (works only for certain coin systems like US coins)
+std::pair<int, std::vector<int>> greedyMinCoins(std::vector<int> coins, int amount) {
+    // Sort coins in descending order
+    std::sort(coins.begin(), coins.end(), std::greater<int>());
+    
+    int count = 0;
+    std::vector<int> coinUsed;
+    
+    for (int coin : coins) {
+        while (amount >= coin) {
+            amount -= coin;
+            count++;
+            coinUsed.push_back(coin);
+        }
+    }
+    
+    if (amount == 0) {
+        return {count, coinUsed};
+    } else {
+        // Greedy algorithm failed
+        return {-1, std::vector<int>()};
+    }
+}
+
+// Helper function to print a vector
+void printVector(const std::vector<int>& vec) {
+    std::cout << "[";
+    for (size_t i = 0; i < vec.size(); i++) {
+        std::cout << vec[i];
+        if (i < vec.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]";
+}
+
+// Helper function to print all combinations
+void printAllCombinationsResult(const std::vector<std::vector<int>>& combinations) {
+    std::cout << "All combinations: [";
+    for (size_t i = 0; i < combinations.size(); i++) {
+        printVector(combinations[i]);
+        if (i < combinations.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]" << std::endl;
+}
+
+int main() {
+    // Example usage for Variant 1
+    std::vector<int> coins1 = {1, 5, 10, 25};
+    int amount1 = 36;
+    
+    std::cout << "Minimum coins needed: " << minCoinsBottomUp(coins1, amount1) << std::endl;
+    
+    auto [minCount, coinsUsed] = minCoinsWithTracking(coins1, amount1);
+    std::cout << "Minimum coins needed: " << minCount << ", using coins: ";
+    printVector(coinsUsed);
+    std::cout << std::endl;
+    
+    // Example usage for Variant 2
+    std::vector<int> coins2 = {1, 2, 5};
+    int amount2 = 5;
+    
+    std::cout << "Number of ways to make change: " << countWaysBottomUp(coins2, amount2) << std::endl;
+    
+    auto combinations = printAllCombinations(coins2, amount2);
+    printAllCombinationsResult(combinations);
+    
+    // Greedy approach for US coins
+    auto [greedyCount, greedyCoins] = greedyMinCoins(coins1, amount1);
+    std::cout << "Greedy solution: " << greedyCount << " coins, using: ";
+    printVector(greedyCoins);
+    std::cout << std::endl;
+    
+    return 0;
+}
