@@ -1,0 +1,102 @@
+You are given an array prices where prices[i] is the price of a given stock on the ith day.
+
+You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
+
+Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.
+
+ 
+
+Example 1:
+
+Input: prices = [7,1,5,3,6,4]
+Output: 5
+Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
+Note that buying on day 2 and selling on day 1 is not allowed because you must buy before you sell.
+
+Example 2:
+
+Input: prices = [7,6,4,3,1]
+Output: 0
+Explanation: In this case, no transactions are done and the max profit = 0.
+
+ 
+
+Constraints:
+
+    1 <= prices.length <= 105
+    0 <= prices[i] <= 104
+
+
+code --> 1D array DP -->
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int n = prices.size();
+        
+        // Edge case: empty array or single price
+        if (n <= 1) return 0;
+        
+        // Create a DP array to store maximum profit up to day i
+        vector<int> dp(n, 0);
+        
+        // Track the minimum price seen so far
+        int minPrice = prices[0];
+        
+        // Fill the DP array
+        for (int i = 1; i < n; i++) {
+            // Two possibilities for maximum profit on day i:
+            // 1. Maximum profit from previous day (don't sell today)
+            // 2. Sell today at current price - minimum price seen so far
+            dp[i] = max(dp[i-1], prices[i] - minPrice);
+            
+            // Update the minimum price seen so far
+            minPrice = min(minPrice, prices[i]);
+        }
+        
+        // The last element contains the maximum profit
+        return dp[n-1];
+    }
+};
+
+
+code ---------> suffix sum
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int n = prices.size();
+        int maxPrice = -1;
+        int maxProfit = -1;
+        for(int i = n - 1;i>=0;i--){
+            maxPrice = max(maxPrice, prices[i]);
+            maxProfit = max(maxProfit, abs(maxPrice - prices[i]));
+        }
+        return maxProfit;
+    }
+};
+
+
+
+
+
+
+
+code --> space optimized DP solution bottom up 
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int buy_day = INT_MAX;
+        int sell_day = 0;
+        int profit = 0;
+        for(int i = 0;i<prices.size();i++){
+            if(buy_day > prices[i]){
+                buy_day=prices[i];
+            }
+            sell_day = prices[i] - buy_day;
+            
+            if(sell_day > profit ){
+                profit = sell_day;
+            }
+        }
+        return profit;
+    }
+};
