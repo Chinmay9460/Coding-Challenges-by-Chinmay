@@ -1,0 +1,70 @@
+Given an integer array nums, return the length of the longest strictly increasing subsequence
+ 
+
+Example 1:
+Input: nums = [10,9,2,5,3,7,101,18]
+Output: 4
+Explanation: The longest increasing subsequence is [2,3,7,101], therefore the length is 4.
+
+Example 2:
+Input: nums = [0,1,0,3,2,3]
+Output: 4
+
+Example 3:
+Input: nums = [7,7,7,7,7,7,7]
+Output: 1
+
+
+Constraints:
+
+    1 <= nums.length <= 2500
+    -104 <= nums[i] <= 104
+
+
+Follow up: Can you come up with an algorithm that runs in O(n log(n)) time complexity?
+
+
+Solution 3: Binary Indexed Tree (Increase BASE of nums into one-base indexing)
+
+    Let f[x] is the length of longest increase subsequence , where all number in the subsequence <= x. This is the max element in indices [1..x] if we build the Binary Indexed Tree (BIT)
+    Since -10^4 <= nums[i] <= 10^4, we can convert nums into 1 <= nums[i] <= 2*10^4+1 by plus BASE=10001 to store into the BIT.
+    We build Max BIT, which has 2 operators:
+        get(idx): Return the maximum value of indices in range [1..idx].
+        update(idx, val): Update a value val into BIT at index idx.
+    Iterate numbers i in range [0..n-1]:
+        subLongest = bit.get(nums[i] - 1) // Get longest increasing subsequence so far, which idx < nums[i], or idx <= nums[i] - 1.
+        bit.update(nums[i], subLongest + 1) // Update latest longest to the BIT.
+    The answer is bit.get(20001) // Maximum of all elements in the BIT
+
+
+code --> 
+
+class MaxBIT { // One-based indexing
+    vector<int> bit;
+public:
+    MaxBIT(int size) {
+        bit.resize(size + 1);
+    }
+    int get(int idx) {
+        int ans = 0;
+        for (; idx > 0; idx -= idx & -idx)
+            ans = max(ans, bit[idx]);
+        return ans;
+    }
+    void update(int idx, int val) {
+        for (; idx < bit.size(); idx += idx & -idx)
+            bit[idx] = max(bit[idx], val);
+    }
+};
+class Solution { // 16 ms, faster than 72.16%
+public:
+    int lengthOfLIS(vector<int>& nums) {
+        int BASE = 10001;
+        MaxBIT bit(20001);
+        for (int x : nums) {
+            int subLongest = bit.get(BASE + x - 1);
+            bit.update(BASE + x, subLongest + 1);
+        }
+        return bit.get(20001);
+    }
+};
