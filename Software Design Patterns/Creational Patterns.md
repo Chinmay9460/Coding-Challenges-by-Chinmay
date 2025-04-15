@@ -12,7 +12,6 @@ Creational design patterns provide various object creation mechanisms, increasin
 **Motivation:** Some resources (e.g., configuration settings, logging) should have exactly one instance to coordinate actions across the system.
 
 **Structure (UML):**
-
 ```
 +-------------------+
 |   Singleton       |
@@ -24,7 +23,6 @@ Creational design patterns provide various object creation mechanisms, increasin
 ```
 
 **Implementation (Java):**
-
 ```java
 public class Singleton {
     private static Singleton instance;
@@ -38,18 +36,39 @@ public class Singleton {
 }
 ```
 
-**Pros:**
+**Use Case Example (Logger):**
+```java
+public class Logger {
+    private static Logger instance;
+    private Logger() {}
 
+    public static Logger getInstance() {
+        if (instance == null) {
+            instance = new Logger();
+        }
+        return instance;
+    }
+
+    public void log(String message) {
+        System.out.println("Log: " + message);
+    }
+}
+```
+
+**Pros:**
 - Controlled access to sole instance.
 - Reduced namespace pollution.
 - Permits refinement of operations and representation.
 
 **Cons:**
-
 - Difficult to unit-test due to global state.
 - Can mask bad design (e.g., using global variables).
 
-**Use Cases:** Logging, configuration, thread pool, caching.
+**Use Cases:**
+- Logging systems (e.g., Log4j, SLF4J).
+- Application configuration (e.g., reading settings from a properties file).
+- Thread pools.
+- Caching frameworks (e.g., Hibernate Second-Level Cache).
 
 ---
 
@@ -60,7 +79,6 @@ public class Singleton {
 **Motivation:** Allow a class to defer instantiation to subclasses, promoting loose coupling.
 
 **Structure (UML):**
-
 ```
 +----------------+      +------------------+
 | Creator        |<>----| Product          |
@@ -78,7 +96,6 @@ public class Singleton {
 ```
 
 **Implementation (Java):**
-
 ```java
 public abstract class Dialog {
     public void renderWindow() {
@@ -95,17 +112,48 @@ public class WindowsDialog extends Dialog {
 }
 ```
 
-**Pros:**
+**Use Case Example (Notification System):**
+```java
+interface Notification {
+    void notifyUser();
+}
 
+class EmailNotification implements Notification {
+    public void notifyUser() {
+        System.out.println("Sending Email Notification");
+    }
+}
+
+class SMSNotification implements Notification {
+    public void notifyUser() {
+        System.out.println("Sending SMS Notification");
+    }
+}
+
+abstract class NotificationFactory {
+    public abstract Notification createNotification();
+}
+
+class EmailNotificationFactory extends NotificationFactory {
+    public Notification createNotification() {
+        return new EmailNotification();
+    }
+}
+```
+
+**Pros:**
 - Promotes loose coupling by eliminating the need to bind application-specific classes into code.
 - Supports single responsibility principle.
 
 **Cons:**
-
 - Requires additional subclasses for each product type.
 - Can increase complexity in the codebase.
 
-**Use Cases:** GUI frameworks, document converters.
+**Use Cases:**
+- GUI frameworks (e.g., Swing, JavaFX).
+- Document converters (e.g., generating PDF or DOCX).
+- Notification systems (e.g., email, SMS, push).
+- Payment gateway implementations (e.g., Stripe, PayPal).
 
 ---
 
@@ -116,7 +164,6 @@ public class WindowsDialog extends Dialog {
 **Motivation:** System should be independent of how its products are created and composed; products from one family are designed to work together.
 
 **Structure (UML):**
-
 ```
 +--------------------+      +--------------------+
 | AbstractFactory    |      | AbstractProductA   |
@@ -132,7 +179,6 @@ public class WindowsDialog extends Dialog {
 ```
 
 **Implementation (Java):**
-
 ```java
 public interface GUIFactory {
     Button createButton();
@@ -145,17 +191,48 @@ public class WinFactory implements GUIFactory {
 }
 ```
 
-**Pros:**
+**Use Case Example (Cross-platform UI):**
+```java
+interface Button {
+    void paint();
+}
 
+class WinButton implements Button {
+    public void paint() {
+        System.out.println("Windows Button");
+    }
+}
+
+class MacButton implements Button {
+    public void paint() {
+        System.out.println("Mac Button");
+    }
+}
+
+interface GUIFactory {
+    Button createButton();
+}
+
+class WinFactory implements GUIFactory {
+    public Button createButton() {
+        return new WinButton();
+    }
+}
+```
+
+**Pros:**
 - Ensures compatibility among products.
 - Promotes consistency across products.
 
 **Cons:**
-
 - Difficult to support new kinds of products.
 - Complexity increases with product families.
 
-**Use Cases:** Cross-platform UI toolkits, database driver families.
+**Use Cases:**
+- Cross-platform UI toolkits (e.g., Qt, SWT).
+- Database driver families (e.g., MySQL, Oracle, PostgreSQL).
+- Theme engines in applications (e.g., light/dark themes).
+- Operating system dependent feature sets.
 
 ---
 
@@ -166,7 +243,6 @@ public class WinFactory implements GUIFactory {
 **Motivation:** Useful when creating complex objects step by step; hides internal representation.
 
 **Structure (UML):**
-
 ```
 +-----------+     +---------+
 | Director  |<>---| Builder |
@@ -178,7 +254,6 @@ public class WinFactory implements GUIFactory {
 ```
 
 **Implementation (Java):**
-
 ```java
 public class MealDirector {
     public Meal prepareVegMeal(Builder builder) {
@@ -189,17 +264,41 @@ public class MealDirector {
 }
 ```
 
-**Pros:**
+**Use Case Example (SQL Query Builder):**
+```java
+class SQLQueryBuilder {
+    private StringBuilder query = new StringBuilder();
 
+    public SQLQueryBuilder select(String table, String... fields) {
+        query.append("SELECT ").append(String.join(", ", fields))
+             .append(" FROM ").append(table);
+        return this;
+    }
+
+    public SQLQueryBuilder where(String condition) {
+        query.append(" WHERE ").append(condition);
+        return this;
+    }
+
+    public String build() {
+        return query.toString();
+    }
+}
+```
+
+**Pros:**
 - Greater control over object construction.
 - Clear separation between construction and representation.
 
 **Cons:**
-
 - Builder code can be verbose.
 - Complexity increases with product variation.
 
-**Use Cases:** Building complex objects like documents, parsers, and UI components.
+**Use Cases:**
+- Building complex objects like documents (e.g., HTML, PDF builders).
+- Constructing parsers.
+- Creating UI components (e.g., dialogs, forms).
+- Generating SQL queries programmatically.
 
 ---
 
@@ -210,7 +309,6 @@ public class MealDirector {
 **Motivation:** When the cost of creating a new object is expensive or complex, cloning a prototype can be more efficient.
 
 **Structure (UML):**
-
 ```
 +-------------+
 | Prototype   |
@@ -225,7 +323,6 @@ public class MealDirector {
 ```
 
 **Implementation (Java):**
-
 ```java
 public class Shape implements Cloneable {
     public Shape clone() throws CloneNotSupportedException {
@@ -234,17 +331,38 @@ public class Shape implements Cloneable {
 }
 ```
 
-**Pros:**
+**Use Case Example (Game Entity):**
+```java
+abstract class Enemy implements Cloneable {
+    public String type;
+    public int health;
 
+    public Enemy clone() throws CloneNotSupportedException {
+        return (Enemy) super.clone();
+    }
+}
+
+class Orc extends Enemy {
+    public Orc() {
+        this.type = "Orc";
+        this.health = 100;
+    }
+}
+```
+
+**Pros:**
 - Hides complexities of object creation.
 - Reduces subclassing.
 
 **Cons:**
-
 - Cloning can be complex if the object graph is deep.
 - Requires careful handling of mutable state.
 
-**Use Cases:** Graphic editors, object caching, runtime configuration.
+**Use Cases:**
+- Graphic editors (e.g., cloning shapes).
+- Object caching and reuse (e.g., flyweight-style clones).
+- Game development (e.g., cloning enemies or items).
+- Runtime configuration snapshots.
 
 ---
 
@@ -252,11 +370,11 @@ public class Shape implements Cloneable {
 
 | Pattern          | Purpose                    | Complexity | Use Case Examples             |
 | ---------------- | -------------------------- | ---------- | ----------------------------- |
-| Singleton        | Single instance            | Low        | Logger, Config                |
-| Factory Method   | Delegate instantiation     | Medium     | Dialogs, Parsers              |
-| Abstract Factory | Family of related products | High       | UI Toolkits, Database Drivers |
-| Builder          | Step-by-step construction  | Medium     | Document Builders, Meals      |
-| Prototype        | Clone existing instances   | Medium     | Graphics, Caching             |
+| Singleton        | Single instance            | Low        | Logger, Config, Caching       |
+| Factory Method   | Delegate instantiation     | Medium     | Dialogs, Parsers, Payments    |
+| Abstract Factory | Family of related products | High       | UI Toolkits, Themes, Drivers  |
+| Builder          | Step-by-step construction  | Medium     | Documents, UI, SQL Builders   |
+| Prototype        | Clone existing instances   | Medium     | Graphics, Game Objects, Cache |
 
 ---
 
