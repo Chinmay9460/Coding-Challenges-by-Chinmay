@@ -1,0 +1,9 @@
+Clients --> 
+    Types: browsers ,mobile apps, IoT Devices, CLI tools
+    Responsibilites: rendering Ui, request batching, caching at the edge
+
+Servers -->
+    Web servers(Nginx, Apache), Database servers, Cache servers, API gateways
+    Understanding how each layer fits:
+        Load Balancers --> Web/API tier --> business logic tier --> Data tier
+
